@@ -1,0 +1,19 @@
+uuid: b8dc8c22-f3e8-4b61-8086-7e91ac088ae6
+langcode: en
+status: true
+dependencies:
+  module:
+    - jobiqo_synonyms
+    - taxonomy
+id: taxonomy_term.field_synonyms
+field_name: field_synonyms
+entity_type: taxonomy_term
+type: jobiqo_synonyms
+settings: {  }
+module: jobiqo_synonyms
+locked: false
+cardinality: -1
+translatable: true
+indexes: {  }
+persist_with_no_fields: false
+custom_storage: false

@@ -1,0 +1,57 @@
+<?php
+
+/**
+ * @file
+ * Module file for jobiqo_synonyms.
+ */
+
+declare(strict_types = 1);
+
+use Drupal\Core\Field\FieldDefinitionInterface;
+
+/**
+ * Implements hook_jobiqo_autotagger_terms_alter().
+ */
+function jobiqo_synonyms_jobiqo_autotagger_terms_alter(array &$terms, string &$vocabulary): void {
+  // Add synonyms to the terms array structure.
+  $fields = \Drupal::service('entity_field.manager')
+    ->getFieldDefinitions('taxonomy_term', $vocabulary);
+
+  foreach ($fields as $field) {
+    if ($field->getType() == 'jobiqo_synonyms') {
+      jobiqo_synonyms_autotagger_merge_text_fields($terms, $vocabulary, $field);
+    }
+  }
+}
+
+/**
+ * Queries and adds synonyms to the terms to autotag.
+ *
+ * @param array $terms
+ *   The terms array to alter.
+ * @param string $vocabulary
+ *   The vocabulary for which the terms should be fetched.
+ * @param \Drupal\Core\Field\FieldDefinitionInterface $field
+ *   The field containing the terms.
+ */
+function jobiqo_synonyms_autotagger_merge_text_fields(array &$terms, string $vocabulary, FieldDefinitionInterface $field): void {
+  // @todo replace the hard coded field table and value column with the ones
+  // fetched through the field definition storage or so.
+  $sql = <<<EOF
+SELECT tid, field_term_synonyms_synonym AS synonym FROM {taxonomy_term_field_data} AS t
+LEFT JOIN taxonomy_term__field_term_synonyms AS s ON s.entity_id = t.tid
+WHERE t.vid = :vocabulary
+EOF;
+
+  $rows = \Drupal::database()->query($sql, [
+    ':vocabulary' => $vocabulary,
+  ])->fetchAll();
+
+  /** @var \stdClass $row */
+  foreach ($rows as $row) {
+    if (!empty($row->synonym)) {
+      \Drupal::service('jobiqo_autotagger.autotagger')
+        ->buildNamesArray($terms, $row->synonym, (int) $row->tid);
+    }
+  }
+}
