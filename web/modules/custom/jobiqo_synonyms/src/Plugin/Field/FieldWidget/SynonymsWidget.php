@@ -42,8 +42,34 @@ class SynonymsWidget extends WidgetBase {
       '#title' => $this->t('Synonyms'),
       '#default_value' => implode("\n", $value),
       '#description' => $this->t('Enter one synonym per line.'),
+      '#element_validate' => [
+        [$this, 'validateSynonymLength'],
+      ],
     ];
     return $widget;
+  }
+
+  /**
+   * Element validate handler for the Synonyms.
+   */
+  public function validateSynonymLength(array $element, FormStateInterface $form_state) {
+    $maxlength = 255;
+
+    // Explode data to an array.
+    $items = explode(PHP_EOL, $element['#value']);
+
+    // Let's go through all rows and check each one.
+    foreach ($items as $item) {
+      // If the synonym is longer than $maxlength characters we will show an
+      // appropriate error.
+      if (($item_strlen = strlen(trim($item))) > $maxlength) {
+        $form_state->setError($element, $this->t("Synonym <b>@synonym</b> cannot be longer than %max characters but is currently %length characters long.", [
+          '@synonym' => $item,
+          '%max' => $maxlength,
+          '%length' => $item_strlen,
+        ]));
+      }
+    }
   }
 
   /**
